@@ -1,0 +1,5 @@
+{
+  "name": "LensPrompt - Image to Prompt Converter",
+  "description": "Upload or paste any image to generate high-quality text prompts and structured JSON data using Google Gemini Vision AI.",
+  "requestFramePermissions": []
+}
