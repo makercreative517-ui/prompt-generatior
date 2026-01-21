@@ -3,7 +3,7 @@ import ImageUploader from './components/ImageUploader';
 import ResultDisplay from './components/ResultDisplay';
 import { generatePromptFromImage } from './services/geminiService';
 import { ImageFile, PromptResult, AppState } from './types';
-import { SparklesIcon, XIcon, RefreshIcon } from './components/Icons';
+import { SparklesIcon, XIcon, RefreshIcon, AlertIcon } from './components/Icons';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(AppState.IDLE);
@@ -35,6 +35,46 @@ const App: React.FC = () => {
     setError(null);
   };
 
+  const getErrorDetails = (errorMessage: string) => {
+    const lowerMsg = errorMessage.toLowerCase();
+    
+    if (lowerMsg.includes('api key') || lowerMsg.includes('401') || lowerMsg.includes('403')) {
+      return {
+        title: 'Authentication Error',
+        suggestion: 'Please check your API key configuration.'
+      };
+    }
+    if (lowerMsg.includes('quota') || lowerMsg.includes('429')) {
+      return {
+        title: 'Rate Limit Exceeded',
+        suggestion: 'Usage limit reached. Please wait a moment.'
+      };
+    }
+    if (lowerMsg.includes('safety') || lowerMsg.includes('blocked')) {
+      return {
+        title: 'Content Blocked',
+        suggestion: 'Image flagged by safety filters. Try a different one.'
+      };
+    }
+    if (lowerMsg.includes('network') || lowerMsg.includes('fetch') || lowerMsg.includes('connection')) {
+      return {
+        title: 'Connection Error',
+        suggestion: 'Check your internet connection.'
+      };
+    }
+    if (lowerMsg.includes('json') || lowerMsg.includes('parse')) {
+        return {
+            title: 'Processing Error',
+            suggestion: 'Failed to parse AI response. Please retry.'
+        };
+    }
+
+    return {
+      title: 'Analysis Failed',
+      suggestion: 'Please try uploading the image again.'
+    };
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30 selection:text-indigo-200 flex flex-col font-sans">
       
@@ -59,15 +99,34 @@ const App: React.FC = () => {
         
         {/* Error Notification */}
         {error && (
-          <div className="w-full bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center justify-between animate-fade-in">
-            <div className="flex items-center space-x-3 text-red-400">
-               <span className="font-semibold">Error:</span>
-               <span>{error}</span>
-            </div>
-            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
-              <XIcon className="w-5 h-5" />
-            </button>
-          </div>
+           (() => {
+             const { title, suggestion } = getErrorDetails(error);
+             return (
+              <div className="w-full bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-4 animate-fade-in relative overflow-hidden">
+                <div className="text-red-400 mt-0.5 shrink-0">
+                   <AlertIcon className="w-6 h-6" />
+                </div>
+                <div className="flex-1 pr-8">
+                   <h3 className="text-red-400 font-bold text-sm uppercase tracking-wider mb-1">
+                     {title}
+                   </h3>
+                   <p className="text-slate-300 text-sm mb-3 opacity-90 leading-relaxed">
+                     {error}
+                   </p>
+                   <div className="inline-flex items-center gap-2 text-red-300 text-xs bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10">
+                      <span className="font-semibold text-red-400">Suggestion:</span>
+                      <span>{suggestion}</span>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => setError(null)} 
+                  className="absolute top-4 right-4 text-red-400/60 hover:text-red-400 transition-colors"
+                >
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+             );
+           })()
         )}
 
         <div className="flex flex-col lg:flex-row gap-8 h-full min-h-[600px]">
